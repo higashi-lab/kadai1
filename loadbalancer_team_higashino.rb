@@ -5,7 +5,6 @@ class Packet < Controller
 	def start
     @firstClient = ""
 		@fdb = {}
-
     @srvIP = []
     @srvMAC = {}
     @srvPort = {}
