@@ -2,9 +2,9 @@ class Packet < Controller
     MIN_INDEX = 128
     MAX_INDEX = 254
 
-	def start
+  def start
     @firstClient = ""
-		@fdb = {}
+    @fdb = {}
     @srvIP = []
     @srvMAC = {}
     @srvPort = {}
@@ -12,13 +12,13 @@ class Packet < Controller
     @targetSrv = ""
     @target = 0
 
-	end
+  end
 
-	def switch_ready dpid
+  def switch_ready dpid
     search_server(dpid)
-	end
+  end
 
-	def packet_in dpid,message
+  def packet_in dpid,message
  
    if message.arp_reply?
       get_arp_reply(dpid,message)
@@ -34,51 +34,51 @@ class Packet < Controller
         @target = (@target + 1) % (@srvIP.size)
         @targetSrv = @srvIP[@target]
 
-		    send_flow_mod_add(
-			    dpid,
+        send_flow_mod_add(
+          dpid,
             :hard_timeout => 0.1,
-			      :match => ExactMatch.from(message),
-			      :actions => [
-			         SetIpDstAddr.new(@srvIP[@target]),
-			         SetEthDstAddr.new(@srvMAC[@targetSrv]),
-			         SendOutPort.new(@srvPort[@targetSrv])
-		        ]
-		      )
+            :match => ExactMatch.from(message),
+            :actions => [
+               SetIpDstAddr.new(@srvIP[@target]),
+               SetEthDstAddr.new(@srvMAC[@targetSrv]),
+               SendOutPort.new(@srvPort[@targetSrv])
+            ]
+          )
         send_packet_out(
-			    dpid,
-			    :packet_in => message,
-		      :actions => [
-		         SetIpDstAddr.new(@srvIP[@target]),
-		         SetEthDstAddr.new(@srvMAC[@targetSrv]),
-		         SendOutPort.new(@srvPort[@targetSrv])
-	        ]
+          dpid,
+          :packet_in => message,
+          :actions => [
+             SetIpDstAddr.new(@srvIP[@target]),
+             SetEthDstAddr.new(@srvMAC[@targetSrv]),
+             SendOutPort.new(@srvPort[@targetSrv])
+          ]
         )
       end
 
 
       if message.ipv4_daddr.to_s.split(".")[3].to_i < 128
 
-  	  	@fdb[message.macsa] = message.in_port
-  		  port = @fdb[message.macda] ? @fdb[message.macda] : OFPP_FLOOD
+        @fdb[message.macsa] = message.in_port
+        port = @fdb[message.macda] ? @fdb[message.macda] : OFPP_FLOOD
 
         if port
-			    send_flow_mod_add(
-				    dpid,
+          send_flow_mod_add(
+            dpid,
             :match => Match.new( :in_port => port,
-						  						       :dl_dst => message.macda),
-				    :actions => Trema::SendOutPort.new(port)
+                                 :dl_dst => message.macda),
+            :actions => Trema::SendOutPort.new(port)
           )
         end
         
         send_packet_out(
           dpid,
-		      :packet_in => message,
+          :packet_in => message,
           :actions => Trema::SendOutPort.new(port)
         )
-		    
+        
       end
     end
-	end
+  end
 
 
   def create_arp_req n
@@ -124,10 +124,10 @@ class Packet < Controller
   end
   def flow_OFPP(dpid,message)
 
-			  send_flow_mod_add(
-				  dpid,
-				  :match => Match.from(message),
-				  :actions => Trema::SendOutPort.new(OFPP_FLOOD)
+        send_flow_mod_add(
+          dpid,
+          :match => Match.from(message),
+          :actions => Trema::SendOutPort.new(OFPP_FLOOD)
         )
   end
 
